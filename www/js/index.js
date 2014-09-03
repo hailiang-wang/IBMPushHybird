@@ -16,6 +16,54 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+var config = {
+    host: "hwcafe.mybluemix.net",
+    path: '/mobile/auth/linkedin',
+    pushAppId : 'a87432fd-2d2e-43d4-91c9-0832af4d4aec',
+    pushAppRoute: 'hwcafe.mybluemix.net',
+    pushAppSecret : '049180170bdc55b6428f65f96f80518b37296000',
+    debug: true,
+    weinre: 'http://192.168.1.108:9088/target/target-script-min.js#musa'
+};
+
+    function _setupPushNotificationService(username){
+        IBMBluemix.hybrid.initialize({applicationId: config.pushAppId,
+                    applicationRoute: config.pushAppRoute,
+                    applicationSecret: config.pushAppSecret}).then(function(){
+            IBMPush.hybrid.initializeService().then(
+                function(pushService){
+                    console.log("Initialized push successfully");
+                    _registerDevice(pushService, username);
+                }, 
+                function(err){
+                    console.error("Error initializing the Push SDK");
+            });
+        }); 
+    }
+    // use a timeout function can make backgroud-foreground works.
+    // but close-foreground still does not work.
+    // the message arrives, but when the app wake up, the cordova method does not called.
+    // 
+    function _handleApplePushNotificationArrival(){
+        var strBuff = '(function(msg){ '
+            + 'setTimeout(function(){alert(msg)},4000);'
+            + '})'
+        return strBuff;
+    }    
+
+    function _registerDevice(push, username){
+    	// handleApplePushNotificationArrival is defined as globally in app.js
+        push.registerDevice(device.uuid, username, _handleApplePushNotificationArrival()).then(
+            function(response) {
+                console.log('bluemix push registered device ' + JSON.stringify(response));
+            }, 
+            function(error) {    
+                console.log('bluemix push error registering device ' + error);
+            }
+        );
+    }
+
 var app = {
     // Application Constructor
     initialize: function() {
@@ -45,5 +93,6 @@ var app = {
         receivedElement.setAttribute('style', 'display:block;');
 
         console.log('Received Event: ' + id);
+        _setupPushNotificationService('hain_wang');
     }
 };
